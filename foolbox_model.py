@@ -9,11 +9,13 @@ import foolbox
 from foolbox import zoo
 
 def create():
+    tf.enable_eager_execution()
     # load pretrained weights
     weights_path = zoo.fetch_weights(
         'http://download.tensorflow.org/models/adversarial_logit_pairing/imagenet64_alp025_2018_06_26.ckpt.tar.gz',
         unzip=True
     )
+
     checkpoint = os.path.join(weights_path, 'imagenet64_alp025_2018_06_26.ckpt')
 
     # load model
