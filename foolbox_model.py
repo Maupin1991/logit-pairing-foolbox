@@ -17,7 +17,7 @@ def create():
     checkpoint = os.path.join(weights_path, 'imagenet64_alp025_2018_06_26.ckpt')
 
     # load model
-    input_ = tf.placeholder(tf.float32, shape=(None, 64, 64, 3))
+    input_ = tf.keras.layers.Inputs(shape=(64, 64, 3), dtype=tf.float32)
     model_fn_two_args = get_model('resnet_v2_50', 1001)
     model_fn = lambda x: model_fn_two_args(x, is_training=False)
     preprocessed = _normalize(input_)
@@ -31,7 +31,7 @@ def create():
     saver.restore(sess, checkpoint)
 
     # create foolbox model
-    fmodel = foolbox.models.TensorFlowModel(input_, logits, bounds=(0, 255), preprocessing=(0, 255))
+    fmodel = foolbox.models.TensorFlowModel(model_fn, preprocessing=(0, 255))
     
     return fmodel
 
