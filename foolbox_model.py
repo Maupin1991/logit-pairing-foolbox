@@ -19,7 +19,7 @@ def create():
     checkpoint = os.path.join(weights_path, 'imagenet64_alp025_2018_06_26.ckpt')
 
     # load model
-    input_ = tf.placeholder(tf.float32, shape=(None, 64, 64, 3))
+    input_ = tf.keras.layers.Input(dtype=tf.float32, shape=(64, 64, 3))
     model_fn_two_args = get_model('resnet_v2_50', 1001)
     model_fn = lambda x: model_fn_two_args(x, is_training=False)
     preprocessed = _normalize(input_)
