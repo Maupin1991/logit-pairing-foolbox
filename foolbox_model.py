@@ -26,11 +26,12 @@ def create():
     logits = model_fn(preprocessed)[:, 1:]
 
     # load pretrained weights into model
-    variables_to_restore = tf.contrib.framework.get_variables_to_restore()
-    saver = tf.train.Saver(variables_to_restore)
-    sess = tf.Session().__enter__()
+    with tf.get_default_graph().as_default():
+        variables_to_restore = tf.contrib.framework.get_variables_to_restore()
+        saver = tf.train.Saver(variables_to_restore)
+        sess = tf.Session().__enter__()
 
-    saver.restore(sess, checkpoint)
+        saver.restore(sess, checkpoint)
 
     # create foolbox model
     fmodel = foolbox.models.TensorFlowModel(input_, logits, bounds=(0, 255), preprocessing=(0, 255))
