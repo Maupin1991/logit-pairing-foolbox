@@ -22,9 +22,9 @@ def create():
         # load model
         input_ = tf.keras.layers.Input(shape=(64, 64, 3), dtype=tf.float32)
         model_fn_two_args = get_model('resnet_v2_50', 1001)
-        model_fn = lambda x: model_fn_two_args(x, is_training=False)
-        preprocessed = _normalize(input_)
-        logits = model_fn(preprocessed)[:, 1:]
+        model_fn = lambda x: model_fn_two_args(_normalize(x), is_training=False)
+        # preprocessed = _normalize(input_)
+        # logits = model_fn(preprocessed)[:, 1:]
 
         # load pretrained weights into model
         variables_to_restore = tf.contrib.framework.get_variables_to_restore()
