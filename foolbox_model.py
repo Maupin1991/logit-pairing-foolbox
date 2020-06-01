@@ -38,7 +38,7 @@ def create():
             return sess.run(logits, feed_dict={input_: inputs})
 
     # create foolbox model
-    fmodel = foolbox.models.TensorFlowModel(__call__, bounds=(0, 255))
+    fmodel = foolbox.models.TensorFlowModel(__call__, bounds=(0, 255), preprocessing=None)
     
     return fmodel
 
