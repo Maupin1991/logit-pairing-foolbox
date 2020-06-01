@@ -68,10 +68,7 @@ def get_model(model_name, num_classes):
     def resnet_model(images, is_training, reuse=tf.AUTO_REUSE):
       with tf.contrib.framework.arg_scope(resnet_v2.resnet_arg_scope()):
         resnet_fn = resnet_v2.resnet_v2_50
-        logits, _ = resnet_fn(images, num_classes, is_training=is_training,
-                              reuse=reuse)
-        logits = tf.reshape(logits, [-1, num_classes])
-      return logits
+        return resnet_fn
     return resnet_model
   else:
     raise ValueError('Invalid model: %s' % model_name)
