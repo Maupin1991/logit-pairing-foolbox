@@ -9,35 +9,29 @@ import foolbox
 from foolbox import zoo
 
 def create():
-    tf.enable_eager_execution()
+    # load pretrained weights
+    weights_path = zoo.fetch_weights(
+        'http://download.tensorflow.org/models/adversarial_logit_pairing/imagenet64_alp025_2018_06_26.ckpt.tar.gz',
+        unzip=True
+    )
+    checkpoint = os.path.join(weights_path, 'imagenet64_alp025_2018_06_26.ckpt')
 
-    with tf.get_default_graph().as_default():
-        # load pretrained weights
-        weights_path = zoo.fetch_weights(
-            'http://download.tensorflow.org/models/adversarial_logit_pairing/imagenet64_alp025_2018_06_26.ckpt.tar.gz',
-            unzip=True
-        )
-        checkpoint = os.path.join(weights_path, 'imagenet64_alp025_2018_06_26.ckpt')
+    # load model
+    input_ = tf.placeholder(tf.float32, shape=(None, 64, 64, 3))
+    model_fn_two_args = get_model('resnet_v2_50', 1001)
+    model_fn = lambda x: model_fn_two_args(x, is_training=False)
+    preprocessed = _normalize(input_)
+    logits = model_fn(preprocessed)[:, 1:]
 
-        # load model
-        input_ = tf.keras.layers.Input(shape=(64, 64, 3), dtype=tf.float32)
-        model_fn_two_args = get_model('resnet_v2_50', 1001)
-        model_fn = lambda x: model_fn_two_args(_normalize(x), is_training=False)
-        # preprocessed = _normalize(input_)
-        # logits = model_fn(preprocessed)[:, 1:]
+    # load pretrained weights into model
+    variables_to_restore = tf.contrib.framework.get_variables_to_restore()
+    saver = tf.train.Saver(variables_to_restore)
+    sess = tf.Session().__enter__()
 
-        # load pretrained weights into model
-        variables_to_restore = tf.contrib.framework.get_variables_to_restore()
-        saver = tf.train.Saver(variables_to_restore)
-        sess = tf.Session().__enter__()
-
-        class Model(object):
-            def __init__(self):
-
-        saver.restore(sess, checkpoint)
+    saver.restore(sess, checkpoint)
 
     # create foolbox model
-    fmodel = foolbox.models.TensorFlowModel(model_fn, bounds=(0, 255))
+    fmodel = foolbox.models.TensorFlowModel(input_, logits, bounds=(0, 255), preprocessing=(0, 255))
     
     return fmodel
 
