@@ -15,18 +15,18 @@ def create():
         'http://download.tensorflow.org/models/adversarial_logit_pairing/imagenet64_alp025_2018_06_26.ckpt.tar.gz',
         unzip=True
     )
-
-    checkpoint = os.path.join(weights_path, 'imagenet64_alp025_2018_06_26.ckpt')
-
-    # load model
-    input_ = tf.keras.layers.Input(dtype=tf.float32, shape=(64, 64, 3))
-    model_fn_two_args = get_model('resnet_v2_50', 1001)
-    model_fn = lambda x: model_fn_two_args(x, is_training=False)
-    preprocessed = _normalize(input_)
-    logits = model_fn(preprocessed)[:, 1:]
-
-    # load pretrained weights into model
     with tf.get_default_graph().as_default():
+
+        checkpoint = os.path.join(weights_path, 'imagenet64_alp025_2018_06_26.ckpt')
+
+        # load model
+        input_ = tf.keras.layers.Input(dtype=tf.float32, shape=(64, 64, 3))
+        model_fn_two_args = get_model('resnet_v2_50', 1001)
+        model_fn = lambda x: model_fn_two_args(x, is_training=False)
+        preprocessed = _normalize(input_)
+        logits = model_fn(preprocessed)[:, 1:]
+
+        # load pretrained weights into model
         variables_to_restore = tf.contrib.framework.get_variables_to_restore()
         saver = tf.train.Saver(variables_to_restore)
         sess = tf.Session().__enter__()
