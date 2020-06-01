@@ -20,11 +20,11 @@ def create():
         checkpoint = os.path.join(weights_path, 'imagenet64_alp025_2018_06_26.ckpt')
 
         # load model
-        input_ = tf.keras.layers.Input(dtype=tf.float32, shape=(64, 64, 3))
+        self.input_ = tf.keras.layers.Input(dtype=tf.float32, shape=(64, 64, 3))
         model_fn_two_args = get_model('resnet_v2_50', 1001)
         model_fn = lambda x: model_fn_two_args(x, is_training=False)
-        preprocessed = _normalize(input_)
-        logits = model_fn(preprocessed)[:, 1:]
+        preprocessed = _normalize(self.input_)
+        self.logits = model_fn(preprocessed)[:, 1:]
 
         # load pretrained weights into model
         variables_to_restore = tf.contrib.framework.get_variables_to_restore()
@@ -33,8 +33,13 @@ def create():
 
         saver.restore(sess, checkpoint)
 
+    class Model:
+        def __call__(self, inputs):
+            sess = tf.get_default_session()
+            return sess.run(self.logits, feed_dict={self.input_: inputs})
+
     # create foolbox model
-    fmodel = foolbox.models.TensorFlowModel(input_, logits, bounds=(0, 255), preprocessing=(0, 255))
+    fmodel = foolbox.models.TensorFlowModel(Model(), bounds=(0, 255), preprocessing=(0, 255))
     
     return fmodel
 
