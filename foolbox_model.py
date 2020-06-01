@@ -9,26 +9,29 @@ import foolbox
 from foolbox import zoo
 
 def create():
-    # load pretrained weights
-    weights_path = zoo.fetch_weights(
-        'http://download.tensorflow.org/models/adversarial_logit_pairing/imagenet64_alp025_2018_06_26.ckpt.tar.gz',
-        unzip=True
-    )
-    checkpoint = os.path.join(weights_path, 'imagenet64_alp025_2018_06_26.ckpt')
+    tf.enable_eager_execution()
 
-    # load model
-    input_ = tf.keras.layers.Inputs(shape=(64, 64, 3), dtype=tf.float32)
-    model_fn_two_args = get_model('resnet_v2_50', 1001)
-    model_fn = lambda x: model_fn_two_args(x, is_training=False)
-    preprocessed = _normalize(input_)
-    logits = model_fn(preprocessed)[:, 1:]
+    with tf.get_default_graph().as_default():
+        # load pretrained weights
+        weights_path = zoo.fetch_weights(
+            'http://download.tensorflow.org/models/adversarial_logit_pairing/imagenet64_alp025_2018_06_26.ckpt.tar.gz',
+            unzip=True
+        )
+        checkpoint = os.path.join(weights_path, 'imagenet64_alp025_2018_06_26.ckpt')
 
-    # load pretrained weights into model
-    variables_to_restore = tf.contrib.framework.get_variables_to_restore()
-    saver = tf.train.Saver(variables_to_restore)
-    sess = tf.Session().__enter__()
+        # load model
+        input_ = tf.keras.layers.Input(shape=(64, 64, 3), dtype=tf.float32)
+        model_fn_two_args = get_model('resnet_v2_50', 1001)
+        model_fn = lambda x: model_fn_two_args(x, is_training=False)
+        preprocessed = _normalize(input_)
+        logits = model_fn(preprocessed)[:, 1:]
 
-    saver.restore(sess, checkpoint)
+        # load pretrained weights into model
+        variables_to_restore = tf.contrib.framework.get_variables_to_restore()
+        saver = tf.train.Saver(variables_to_restore)
+        sess = tf.Session().__enter__()
+
+        saver.restore(sess, checkpoint)
 
     # create foolbox model
     fmodel = foolbox.models.TensorFlowModel(model_fn, preprocessing=(0, 255))
