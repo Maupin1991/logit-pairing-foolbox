@@ -33,9 +33,9 @@ def create():
 
         saver.restore(sess, checkpoint)
 
-    def __call__(inputs):
-        sess = tf.get_default_session()
-        return sess.run(logits, feed_dict={input_: inputs})
+        def __call__(inputs):
+            sess = tf.get_default_session()
+            return sess.run(logits, feed_dict={input_: inputs})
 
     # create foolbox model
     fmodel = foolbox.models.TensorFlowModel(__call__, bounds=(0, 255))
