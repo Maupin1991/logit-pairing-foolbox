@@ -34,7 +34,7 @@ def create():
         saver.restore(sess, checkpoint)
 
     # create foolbox model
-    fmodel = foolbox.models.TensorFlowModel(model_fn, preprocessing=(0, 255))
+    fmodel = foolbox.models.TensorFlowModel(model_fn, bounds=(0, 255), preprocessing=(0, 255))
     
     return fmodel
 
