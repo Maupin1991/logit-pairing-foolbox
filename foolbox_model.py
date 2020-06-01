@@ -16,12 +16,13 @@ def create():
             # load model
             self.input_ = tf.keras.layers.Input(shape=(64, 64, 3), dtype=tf.float32)
             model_fn_two_args = get_model('resnet_v2_50', 1001)
-            model_fn = lambda x: model_fn_two_args(_normalize(x), is_training=False)
-            self.logits = model_fn(preprocessed)[:, 1:]
+            self.model_fn = lambda x: model_fn_two_args(self._input_, is_training=False)
+
 
         def __call__(self, inputs):
             sess = tf.get_default_session()
             preprocessed = _normalize(inputs)
+            self.logits = model_fn(preprocessed)[:, 1:]
             sess.run(self.logits, feed_dict={self.input_: preprocessed})
 
 
@@ -42,7 +43,7 @@ def create():
         saver.restore(sess, checkpoint)
 
     # create foolbox model
-    fmodel = foolbox.models.TensorFlowModel(model_fn, bounds=(0, 255))
+    fmodel = foolbox.models.TensorFlowModel(model, bounds=(0, 255))
     
     return fmodel
 
