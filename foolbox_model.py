@@ -11,21 +11,6 @@ from foolbox import zoo
 def create():
     tf.enable_eager_execution()
 
-    class Model(object):
-        def __init__(self):
-            # load model
-            self.input_ = tf.keras.layers.Input(shape=(64, 64, 3), dtype=tf.float32)
-            model_fn_two_args = get_model('resnet_v2_50', 1001)
-            self.model_fn = lambda x: model_fn_two_args(self._input_, is_training=False)
-
-
-        def __call__(self, inputs):
-            sess = tf.get_default_session()
-            preprocessed = _normalize(inputs)
-            self.logits = model_fn(preprocessed)[:, 1:]
-            sess.run(self.logits, feed_dict={self.input_: preprocessed})
-
-
     with tf.get_default_graph().as_default():
         # load pretrained weights
         weights_path = zoo.fetch_weights(
@@ -33,17 +18,26 @@ def create():
             unzip=True
         )
         checkpoint = os.path.join(weights_path, 'imagenet64_alp025_2018_06_26.ckpt')
-        model = Model()
+
+        # load model
+        input_ = tf.keras.layers.Input(shape=(64, 64, 3), dtype=tf.float32)
+        model_fn_two_args = get_model('resnet_v2_50', 1001)
+        model_fn = lambda x: model_fn_two_args(_normalize(x), is_training=False)
+        # preprocessed = _normalize(input_)
+        # logits = model_fn(preprocessed)[:, 1:]
+
         # load pretrained weights into model
         variables_to_restore = tf.contrib.framework.get_variables_to_restore()
         saver = tf.train.Saver(variables_to_restore)
         sess = tf.Session().__enter__()
 
+        class Model(object):
+            def __init__(self):
 
         saver.restore(sess, checkpoint)
 
     # create foolbox model
-    fmodel = foolbox.models.TensorFlowModel(model, bounds=(0, 255))
+    fmodel = foolbox.models.TensorFlowModel(model_fn, bounds=(0, 255))
     
     return fmodel
 
@@ -68,7 +62,10 @@ def get_model(model_name, num_classes):
     def resnet_model(images, is_training, reuse=tf.AUTO_REUSE):
       with tf.contrib.framework.arg_scope(resnet_v2.resnet_arg_scope()):
         resnet_fn = resnet_v2.resnet_v2_50
-        return resnet_fn
+        logits, _ = resnet_fn(images, num_classes, is_training=is_training,
+                              reuse=reuse)
+        logits = tf.reshape(logits, [-1, num_classes])
+      return logits
     return resnet_model
   else:
     raise ValueError('Invalid model: %s' % model_name)
