@@ -9,6 +9,36 @@ import foolbox
 from foolbox import zoo
 
 def create():
+    def _normalize(image):
+        """Rescale image to [-1, 1] range."""
+        return tf.multiply(tf.subtract(image, 0.5), 2.0)
+
+    def get_model(model_name, num_classes):
+        """Returns function which creates model.
+
+        Args:
+          model_name: Name of the model.
+          num_classes: Number of classes.
+
+        Raises:
+          ValueError: If model_name is invalid.
+
+        Returns:
+          Function, which creates model when called.
+        """
+        if model_name.startswith('resnet'):
+            def resnet_model(images, is_training, reuse=tf.AUTO_REUSE):
+                with tf.contrib.framework.arg_scope(resnet_v2.resnet_arg_scope()):
+                    resnet_fn = resnet_v2.resnet_v2_50
+                    logits, _ = resnet_fn(images, num_classes, is_training=is_training,
+                                          reuse=reuse)
+                    logits = tf.reshape(logits, [-1, num_classes])
+                return logits
+
+            return resnet_model
+        else:
+            raise ValueError('Invalid model: %s' % model_name)
+
     tf.enable_eager_execution()
     # load pretrained weights
     weights_path = zoo.fetch_weights(
@@ -42,31 +72,4 @@ def create():
     
     return fmodel
 
-def _normalize(image):
-  """Rescale image to [-1, 1] range."""
-  return tf.multiply(tf.subtract(image, 0.5), 2.0)
 
-def get_model(model_name, num_classes):
-  """Returns function which creates model.
-
-  Args:
-    model_name: Name of the model.
-    num_classes: Number of classes.
-
-  Raises:
-    ValueError: If model_name is invalid.
-
-  Returns:
-    Function, which creates model when called.
-  """
-  if model_name.startswith('resnet'):
-    def resnet_model(images, is_training, reuse=tf.AUTO_REUSE):
-      with tf.contrib.framework.arg_scope(resnet_v2.resnet_arg_scope()):
-        resnet_fn = resnet_v2.resnet_v2_50
-        logits, _ = resnet_fn(images, num_classes, is_training=is_training,
-                              reuse=reuse)
-        logits = tf.reshape(logits, [-1, num_classes])
-      return logits
-    return resnet_model
-  else:
-    raise ValueError('Invalid model: %s' % model_name)
